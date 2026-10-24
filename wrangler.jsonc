@@ -1,0 +1,9 @@
+{
+  "name": "red-wood-e8bc",
+  "compatibility_date": "2026-10-24",
+  "assets": {
+    "directory": "./",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  }
+}

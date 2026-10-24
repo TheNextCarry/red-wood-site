@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#14213D" />
+  <title>Shop The Next Carry</title>
+  <meta name="description" content="Authenticated pre-loved Chanel, Hermès, Louis Vuitton and more. Live stock from The Next Carry." />
+  <link rel="canonical" href="https://shop.thenextcarry.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="The Next Carry" />
+  <meta property="og:title" content="Shop The Next Carry" />
+  <meta property="og:description" content="Authenticated pre-loved Chanel, Hermès, Louis Vuitton and more." />
+  <meta property="og:url" content="https://shop.thenextcarry.com/" />
+  <meta property="og:image" content="https://shop.thenextcarry.com/images/apple-touch-icon.png" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Shop The Next Carry" />
+  <meta name="twitter:description" content="Authenticated pre-loved Chanel, Hermès, Louis Vuitton and more." />
+  <meta name="twitter:image" content="https://shop.thenextcarry.com/images/apple-touch-icon.png" />
+  <link rel="icon" href="images/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="images/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png" />
+  <link rel="preload" as="image" href="images/logo.jpg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Jost:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --navy:#14213D; --taupe:#9E8F82; --ivory:#ffffff; --ink:#14213D; }
+    html { scroll-behavior: smooth; }
+    body { font-family: Jost, ui-sans-serif, system-ui, sans-serif; background: #ffffff; color: var(--navy); }
+    .serif { font-family: "Cormorant Garamond", Georgia, serif; }
+    .sold-card img { filter: grayscale(.85); opacity: .55; }
+    .pill { letter-spacing: .18em; text-transform: uppercase; font-size: 10px; }
+    .stat-btn { min-width: 5.5rem; cursor: pointer; background: transparent; border: 0; padding: 0.25rem 0.5rem; color: inherit; }
+    .stat-btn:hover .serif { color: #9E8F82; }
+    .stat-btn.active .serif { text-decoration: underline; text-underline-offset: 6px; }
+    .brand-chip { border: 1px solid rgba(20,33,61,.2); padding: .45rem .8rem; font-size: 13px; background: #fff; color: #14213D; }
+    .brand-chip:hover, .brand-chip.active { background: #14213D; color: #fff; }
+    html, body { overflow-x: hidden; }
+    input, select, textarea { font-size: 16px; }
+    @media (max-width: 640px) {
+      #modal { padding: 0; align-items: stretch !important; }
+      #modalCard { max-height: 100dvh; height: 100dvh; }
+      #mail, #mshare { width: 100%; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <header class="sticky top-0 z-40 bg-[#14213D] text-white">
+    <div class="max-w-6xl mx-auto px-5 min-h-14 sm:h-16 py-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+      <a href="#top" class="flex items-center gap-3 text-white">
+        <img src="images/apple-touch-icon.png" alt="The Next Carry" class="h-8 sm:h-9 w-auto object-contain rounded-sm" />
+        <span class="serif tracking-[0.18em] text-xs sm:tracking-[0.22em] sm:text-base">THE NEXT CARRY</span>
+      </a>
+      <nav class="flex items-center gap-4 sm:gap-5 text-[10px] sm:text-[11px] tracking-[0.14em] sm:tracking-[0.22em] uppercase text-white/80">
+        <a href="https://www.instagram.com/thenextcarry_/" target="_blank" rel="noopener" class="hover:text-white">Follow us on Instagram @thenextcarry_</a>
+        <a href="#collection" class="hover:text-white">Collection</a>
+        <a href="mailto:info@thenextcarry.com" class="bg-white text-[#14213D] px-3 py-2">Inquire</a>
+      </nav>
+    </div>
+  </header>
+
+  <section id="top" class="max-w-6xl mx-auto px-5 pt-12 pb-6 text-center">
+    <div class="mx-auto h-24 sm:h-40 md:h-52 w-56 sm:w-80 md:w-96 flex items-center justify-center">
+      <img src="images/logo.jpg" alt="The Next Carry" width="480" height="208" class="max-h-full w-auto object-contain" />
+    </div>
+    <div class="mt-8 flex justify-center flex-wrap gap-4 sm:gap-8 text-center">
+      <button type="button" class="stat-btn" data-stat="shop" onclick="jumpFilter('shop')">
+        <p id="nAvail" class="serif text-3xl">—</p>
+        <p class="pill text-[#14213D]/60 mt-1">Available</p>
+      </button>
+      <button type="button" class="stat-btn" data-stat="sold" onclick="jumpFilter('sold')">
+        <p id="nSold" class="serif text-3xl">—</p>
+        <p class="pill text-[#14213D]/60 mt-1">Sold</p>
+      </button>
+      <button type="button" class="stat-btn" data-stat="soon" onclick="jumpFilter('soon')">
+        <p id="nSoon" class="serif text-3xl">—</p>
+        <p class="pill text-[#14213D]/60 mt-1">Coming soon</p>
+      </button>
+      <button type="button" class="stat-btn" data-stat="brands" onclick="jumpFilter('brands')">
+        <p id="nHouses" class="serif text-3xl">—</p>
+        <p class="pill text-[#14213D]/60 mt-1">Brands</p>
+      </button>
+    </div>
+    <div id="brandPanel" class="hidden mt-8 max-w-3xl mx-auto flex flex-wrap justify-center gap-2"></div>
+  </section>
+
+  <section id="collection" class="max-w-6xl mx-auto px-5 py-10">
+    <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-5 mb-8">
+      <div>
+        <p class="pill text-[#14213D]/70">Live inventory</p>
+        <h2 class="serif text-4xl mt-1">The collection</h2>
+        <p id="sub" class="text-sm text-[#14213D]/60 mt-2">Loading pieces…</p>
+        <p id="skuMiss" class="hidden mt-3 text-sm text-[#14213D] bg-[#14213D]/5 border border-[#14213D]/15 px-3 py-2">Sorry, we couldn't find that bag.</p>
+      </div>
+      <div class="flex flex-col sm:flex-row flex-wrap gap-2 w-full">
+        <input id="q" placeholder="Search brand or bag, close spellings ok" class="border border-[#14213D]/25 bg-white rounded-none px-4 py-3 text-sm w-full sm:min-w-[190px]" />
+        <select id="brand" class="border border-[#14213D]/25 bg-white px-3 py-3 text-sm w-full sm:w-auto"></select>
+        <select id="avail" class="border border-[#14213D]/25 bg-white px-3 py-3 text-sm w-full sm:w-auto">
+          <option value="live">Available + coming soon</option>
+          <option value="shop">Available now</option>
+          <option value="sold">Sold</option>
+          <option value="soon">Coming soon</option>
+          <option value="held">Pending</option>
+          <option value="all">All</option>
+        </select>
+        <select id="sortBy" class="border border-[#14213D]/25 bg-white px-3 py-3 text-sm w-full sm:w-auto">
+          <option value="newest">Newest</option>
+          <option value="oldest">Oldest</option>
+          <option value="brand">Brand A–Z</option>
+        </select>
+      </div>
+    </div>
+
+    <p id="err" class="hidden text-sm text-red-900 bg-red-50 border border-red-100 p-4 mb-6"></p>
+    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-x-3 gap-y-6 sm:gap-x-4 sm:gap-y-8 min-h-[70vh]"></div>
+  </section>
+
+  <footer class="bg-[#14213D] text-[#F6F1EA]">
+    <div class="max-w-6xl mx-auto px-5 py-12 grid md:grid-cols-2 gap-8">
+      <div>
+        <p class="serif text-2xl tracking-[0.2em]">THE NEXT CARRY</p>
+        <p class="text-[11px] tracking-[0.3em] text-[#9E8F82] mt-2">LUXURY THAT LIVES ON</p>
+      </div>
+      <div class="text-sm md:text-right space-y-1 text-[#F6F1EA]/80">
+        <p><a class="underline decoration-[#9E8F82]/60" href="mailto:info@thenextcarry.com">info@thenextcarry.com</a></p>
+        <p>Atlanta</p>
+      </div>
+    </div>
+  </footer>
+
+  <div id="modal" class="fixed inset-0 bg-[#14213D]/75 hidden items-center justify-center p-4 z-50">
+    <div id="modalCard" class="relative bg-white max-w-3xl w-full max-h-[92vh] overflow-y-auto">
+      <button type="button" id="mcX" class="absolute top-3 right-3 z-10 w-11 h-11 rounded-full bg-[#14213D] text-white text-2xl leading-none">×</button>
+      <div class="grid md:grid-cols-2">
+        <div class="bg-white">
+          <div class="relative">
+            <img id="mi" class="w-full h-64 sm:h-72 md:min-h-[22rem] object-contain bg-white cursor-zoom-in" alt="" title="Click to enlarge" />
+            <button type="button" id="prevShot" class="absolute left-2 top-1/2 -translate-y-1/2 bg-[#14213D]/80 text-white w-9 h-9 rounded-full">‹</button>
+            <button type="button" id="nextShot" class="absolute right-2 top-1/2 -translate-y-1/2 bg-[#14213D]/80 text-white w-9 h-9 rounded-full">›</button>
+          </div>
+          <div id="mthumbs" class="flex flex-wrap gap-2 p-3"></div>
+        </div>
+        <div class="p-5 sm:p-8">
+          <p id="mb" class="pill text-[#14213D]/70"></p>
+          <h3 id="mt" class="serif text-3xl mt-2 leading-tight"></h3>
+          <p id="msku" class="text-xs tracking-[0.08em] text-[#14213D]/50 mt-1"></p>
+          <p id="mp" class="text-xl mt-4"></p>
+          <p id="ms" class="pill mt-3"></p>
+          <a id="mentrupy" class="hidden mt-4 text-sm underline text-[#14213D]" target="_blank" rel="noopener">View Entrupy certificate</a>
+          <div id="mmeasWrap" class="hidden mt-5">
+            <p class="pill text-[#14213D]/60">Measurements</p>
+            <p id="mmeas" class="text-sm text-[#14213D]/80 mt-1 whitespace-pre-line"></p>
+          </div>
+          <div id="mdescWrap" class="hidden mt-5">
+            <p class="pill text-[#14213D]/60">Condition</p>
+            <p id="mdesc" class="text-sm text-[#14213D]/80 mt-1 whitespace-pre-line"></p>
+          </div>
+          <p class="text-sm text-[#14213D]/75 mt-5 leading-relaxed">Please inspect every photo and the notes above for wear and defects. Bags are sold as seen. <span class="font-medium">All sales are final.</span></p>
+          <p id="mlink" class="hidden text-xs break-all text-[#14213D]/50 mt-4"></p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a id="mail" class="inline-block bg-[#14213D] text-white text-xs tracking-[0.2em] uppercase px-6 py-3">Inquire about this bag</a>
+            <button type="button" id="mshare" class="inline-block border border-[#14213D] text-[#14213D] text-xs tracking-[0.2em] uppercase px-6 py-3">Share</button>
+          </div>
+          <p id="mshareMsg" class="text-xs text-[#14213D]/50 mt-2"></p>
+          <div id="shareSheet" class="hidden mt-3 border border-[#14213D]/15 bg-[#14213D]/5">
+            <a id="shareMessages" class="block px-4 py-3 text-sm border-b border-[#14213D]/10">Messages</a>
+            <a id="shareMail" class="block px-4 py-3 text-sm border-b border-[#14213D]/10">Mail</a>
+            <button type="button" id="shareCopy" class="block w-full text-left px-4 py-3 text-sm">Copy link</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="zoom" class="fixed inset-0 bg-black/90 hidden items-center justify-center z-[60]">
+    <button type="button" id="zoomClose" class="absolute top-4 right-4 w-12 h-12 rounded-full bg-white text-black text-3xl leading-none">×</button>
+    <button type="button" id="zoomPrev" class="absolute left-3 md:left-8 text-white text-5xl leading-none px-2">‹</button>
+    <img id="zi" class="max-w-[94vw] max-h-[90vh] object-contain" alt="" />
+    <button type="button" id="zoomNext" class="absolute right-3 md:right-8 text-white text-5xl leading-none px-2">›</button>
+    <p id="zoomCap" class="absolute bottom-4 text-white/80 text-xs tracking-widest uppercase"></p>
+  </div>
+
+<script>
+const BAKED_URL = 'https://rcjriebqvyxuqfqxibfx.supabase.co';
+const BAKED_KEY = 'sb_publishable_FgB3bBqEH-PgzgnC7EI8zQ_ADRYUw5C';
+const CONTACT = 'info@thenextcarry.com';
+
+const money = n => (n == null || n === '') ? 'Inquire' : Number(n).toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0});
+const label = s => ({
+  'in-stock': 'Available',
+  'reserved': 'Pending',
+  'sold': 'Sold',
+  'on-order': 'Coming soon',
+  'coming': 'Coming soon'
+}[s] || 'Available');
+
+let products = [], state = {};
+
+function cfg() {
+  if (BAKED_URL.startsWith('http') && BAKED_KEY.length > 20 && !BAKED_URL.includes('PASTE_')) {
+    return { url: BAKED_URL.trim(), key: BAKED_KEY.trim() };
+  }
+  try { return JSON.parse(localStorage.getItem('tnc_sb_cfg') || 'null'); } catch { return null; }
+}
+
+function getS(sku) { return state[sku] || { status: 'in-stock' }; }
+function normSku(s) {
+  return String(s || '').replace(/\s+/g, '').toLowerCase();
+}
+const TNC_FALLBACK = {
+  'srkn0cely': 's36ydd8jv8g',
+  'e9en0cwqh': 'uit4cwn85we',
+  '76fn0c5ue': 'moadsnd0jm8',
+  'qecn0c4bs': 'fbx4fyhyjp8',
+  '57cn0cb9z': 'ikx51w22a5r',
+  'rekn0cj8m': 'd1lmxv497bo',
+  '39gn0ccr4': 'wp471fpgfpf',
+  '2bhn0cekt': '04vbx0hpjtb3',
+  '9emn0cxbf': 'gxqb0x2l22q',
+  '3x9n0c6t5': 'un6em6q0lxf'
+};
+function findBag(code) {
+  const want = normSku(code);
+  if (!want) return null;
+  const hit = products.find(p => normSku(p.sku) === want || normSku(p.tnc_sku) === want);
+  if (hit) return hit;
+  const fb = TNC_FALLBACK[want];
+  return fb ? products.find(p => normSku(p.sku) === fb) || null : null;
+}
+function tagCode(p) {
+  return String((p && (p.tnc_sku || p.sku)) || '').replace(/\s+/g, '');
+}
+function setSkuParam(code) {
+  const url = new URL(location.href);
+  if (code) url.searchParams.set('sku', code);
+  else url.searchParams.delete('sku');
+  const next = url.pathname + url.search + url.hash;
+  try { history.replaceState({}, '', next); } catch (e) {}
+}
+function showSkuMiss(on) {
+  const el = document.getElementById('skuMiss');
+  if (el) el.classList.toggle('hidden', !on);
+}
+function openFromQuery() {
+  const want = new URLSearchParams(location.search).get('sku') || location.hash.replace('#', '');
+  if (!want) { showSkuMiss(false); return; }
+  const bag = findBag(want);
+  if (!bag) {
+    showSkuMiss(true);
+    return;
+  }
+  showSkuMiss(false);
+  document.getElementById('avail').value = 'all';
+  render();
+  openItem(bag.sku, { fromQuery: true });
+}
+const LOCAL_EXTRA = { '1gn409a18lv': 1, '1r1syvawwvo': 15, '2upy7p8nawn': 11, '2yga8h2oyq3': 12, '34btshtucd3': 15, '3b7puhavzfb': 11, '3ggxhlvh9vy': 8, '533hc6q1rdp': 11, '5442t9ryohb': 17, '5pqmpl28ggn': 12, '6lrs0na88qm': 16, '769ehjlqt2v': 16, '7a6656o62y8': 11, '7v922ewffrt': 15, '8ex0fvtz1dl': 13, '8gukrfid3vf': 15, '8q4gn607978': 13, '933sns3jtg4': 13, '9lhytyhvf3w': 19, 'an1mf1th9bp': 15, 'cezpy9v1yve': 19, 'cgx7rrebh2k': 9, 'chd0y624xb': 14, 'd9gy6eqcd3m': 9, 'eco6i7ycgv': 11, 'f0l4qhvp3rl': 13, 'fa8yhqyqpiq': 15, 'fhbpamf0vj': 14, 'fx8jma5jhvv': 15, 'g3awi4elmn8': 16, 'gdkvu102fg': 13, 'gvsmi5f3j': 7, 'hgwa8kb1ni': 18, 'i7hsmgnw9qk': 13, 'ivgg8ybbxbo': 17, 'j65fttdu7t': 11, 'jp188m3snt9': 10, 'kdm8p65l9n': 14, 'logsf8kl89n': 8, 'm220vbykko': 10, 'mfxgl3vo1l': 16, 'mtfcna8kwab': 13, 'ovcxvy0h3zh': 16, 'pw16wcjjxw': 11, 'q2led5hi63d': 10, 'qdpxxwewwdd': 20, 'qk0r7bx2bwq': 11, 'u15gdm2xep': 10, 'uksk2evzysq': 15, 'uo7e1889emj': 15, 'uq2wldh14w': 19, 'vlwhyz7bch7': 11, 'vnnig2r28h': 11, 'vv6ru0ayw1': 20, 'wm0atcgb4pe': 13, 'x3i5d375b6': 10, 'xfb18at34xr': 11, 'yd6swnlem1m': 17, 'yivvowa52o': 15, 'yl097yrsyg': 11, 'ypob7s9doqj': 12, 'yyto4mi7da': 13 };
+const LOCAL_MISSING = new Set(['2qqnadk7omg','2hatte1s72','5tr22eatgiw','5pqmpl28ggn','7992g19qey8','6uyynyf66hk','g3awi4elmn8','yivvowa52o','med14h4pdf','1r1syvawwvo','logsf8kl89n','vv6ru0ayw1','uit4cwn85we','d1lmxv497bo','moadsnd0jm8','fbx4fyhyjp8','un6em6q0lxf','04vbx0hpjtb3','gxqb0x2l22q','s36ydd8jv8g','ikx51w22a5r','wp471fpgfpf','6lrs0na88qm','2dio2w8uzod','3ly5524jvdz','6f5ac8k85li','8rmb9x4be2','84vsnv7rd7','730uuq9awom','ujzwec9kmt','r2vohi6cafo','9mr5zjm8av6','9a12u4ccch','a7ygent5rcw','an1mf1th9bp','fghdo50acdm','dv1r4uw8wuk','u26r56jg0zs','5x2qxt4xxvv','fx8jma5jhvv','mfxgl3vo1l','pw16wcjjxw','seu4f4bcvr','wupw23qho3c','yt4e7vr0ym','1spxtflfxpkj','8t1icytpm5h','gezu4d7qvv4','l3wyb0iay8o','oljkhcgzqda','vy32luziv7','trlts5atcq']);
+function extraLocal(sku) {
+  if (LOCAL_MISSING.has(sku)) return [];
+  const n = LOCAL_EXTRA[sku] || 1;
+  const out = [];
+  for (let i = 2; i <= n; i++) out.push('images/' + sku + '-' + String(i).padStart(2,'0') + '.jpg');
+  return out;
+}
+function photosOf(p) {
+  const hidden = new Set(Array.isArray(p?.hidden_photos) ? p.hidden_photos : []);
+  const g = Array.isArray(p?.gallery) ? p.gallery : [];
+  const local = LOCAL_MISSING.has(p.sku) ? null : ('images/' + p.sku + '.jpg');
+  return [...new Set([local, p.image_url, ...g, ...extraLocal(p.sku)].filter(u => u && !hidden.has(u)))];
+}
+
+window.galleryShots = [];
+window.shotIndex = 0;
+window.showShot = function(i) {
+  const shots = window.galleryShots || [];
+  if (!shots.length) return;
+  window.shotIndex = (i + shots.length) % shots.length;
+  const src = shots[window.shotIndex];
+  const img = document.getElementById('mi');
+  img.src = src;
+  const z = document.getElementById('zi');
+  if (z) z.src = src;
+  const cap = document.getElementById('zoomCap');
+  if (cap) cap.textContent = (window.shotIndex + 1) + ' / ' + shots.length;
+};
+window.openZoom = function() {
+  const z = document.getElementById('zoom');
+  z.classList.remove('hidden');
+  z.classList.add('flex');
+  showShot(window.shotIndex);
+};
+window.closeZoom = function() {
+  const z = document.getElementById('zoom');
+  z.classList.add('hidden');
+  z.classList.remove('flex');
+};
+
+const brandKey = s => fold(s);
+function fold(s) {
+  return String(s || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a || !b) return Math.max((a || '').length, (b || '').length);
+  const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let prev = i;
+    for (let j = 1; j <= b.length; j++) {
+      const cur = a[i - 1] === b[j - 1] ? row[j - 1] : Math.min(row[j - 1], row[j], prev) + 1;
+      row[j - 1] = prev;
+      prev = cur;
+    }
+    row[b.length] = prev;
+  }
+  return row[b.length];
+}
+const SEARCH_ALIASES = {
+  lv: 'louis vuitton',
+  vuitton: 'louis vuitton',
+  ysl: 'saint laurent',
+  bv: 'bottega veneta',
+  bottega: 'bottega veneta',
+  hermes: 'hermes',
+  celine: 'celine',
+  chanel: 'chanel'
+};
+function expandQuery(q) {
+  return q.split(' ').map(w => SEARCH_ALIASES[w] || w).join(' ');
+}
+function bagText(p) {
+  return fold([prettyBrand(p.brand), p.brand, p.bag_name, p.sku, p.tnc_sku].filter(Boolean).join(' '));
+}
+function scoreBag(p, q) {
+  const hay = bagText(p);
+  if (!q) return 1;
+  if (hay.includes(q)) return 100;
+  const qWords = q.split(' ').filter(Boolean);
+  const hayWords = hay.split(' ').filter(w => w.length > 1);
+  let score = 0;
+  for (const qw of qWords) {
+    let best = 0;
+    for (const hw of hayWords) {
+      if (hw === qw) best = Math.max(best, 12);
+      else if (hw.startsWith(qw) || qw.startsWith(hw)) best = Math.max(best, 9);
+      else if (hw.includes(qw) || qw.includes(hw)) best = Math.max(best, 7);
+      else {
+        const d = levenshtein(qw, hw);
+        const limit = qw.length <= 4 ? 1 : qw.length <= 7 ? 2 : 3;
+        if (d <= limit) best = Math.max(best, 6 - d);
+      }
+    }
+    if (!best) return 0;
+    score += best;
+  }
+  return score;
+}
+function prettyBrand(s) {
+  const k = brandKey(s);
+  const map = {
+    'louis vuitton': 'Louis Vuitton',
+    'celine': 'Celine',
+    'chanel': 'Chanel',
+    'fendi': 'Fendi',
+    'gucci': 'Gucci',
+    'dior': 'Dior',
+    'christian dior': 'Dior',
+    'hermes': 'Hermès',
+    'hermès': 'Hermès',
+    'bottega veneta': 'Bottega Veneta',
+    'saint laurent': 'Saint Laurent',
+    'ysl': 'Saint Laurent',
+    'yves saint laurent': 'Saint Laurent',
+    'yves saint-laurent': 'Saint Laurent',
+    'prada': 'Prada',
+    'loewe': 'Loewe',
+    'ferragamo': 'Ferragamo',
+    'salvatore ferragamo': 'Ferragamo'
+  };
+  if (map[k]) return map[k];
+  const t = (s || '').trim();
+  if (!t) return '';
+  return t.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+function uniqueBrands() {
+  const m = new Map();
+  products.forEach(p => {
+    const label = prettyBrand(p.brand);
+    if (label) m.set(brandKey(label), label);
+  });
+  return [...m.values()].sort((a,b) => a.localeCompare(b));
+}
+
+function isComp(p) {
+  return String((p && p.sheet) || '').toLowerCase().includes('lost tbc');
+}
+function visible(p) {
+  if (isComp(p)) return false;
+  const st = getS(p.sku).status;
+  const mode = document.getElementById('avail').value;
+  if (mode === 'live') return st === 'in-stock' || st === 'coming' || st === 'on-order';
+  if (mode === 'shop') return st === 'in-stock';
+  if (mode === 'sold') return st === 'sold';
+  if (mode === 'soon') return st === 'on-order' || st === 'coming';
+  if (mode === 'held') return st === 'reserved';
+  return true;
+}
+
+function stats() {
+  const avail = products.filter(p => !isComp(p) && getS(p.sku).status === 'in-stock').length;
+  const sold = products.filter(p => !isComp(p) && getS(p.sku).status === 'sold').length;
+  const soon = products.filter(p => !isComp(p) && ['on-order','coming'].includes(getS(p.sku).status)).length;
+  const houses = uniqueBrands().length;
+  document.getElementById('nAvail').textContent = avail;
+  document.getElementById('nSold').textContent = sold;
+  document.getElementById('nSoon').textContent = soon;
+  document.getElementById('nHouses').textContent = houses;
+  const cur = document.getElementById('brand').value;
+  document.getElementById('brandPanel').innerHTML = uniqueBrands().map(b =>
+    `<button type="button" class="brand-chip ${cur===b?'active':''}" onclick="pickBrand('${b.replace(/'/g, "\\'")}')">${b}</button>`
+  ).join('');
+}
+
+function markStat(which) {
+  document.querySelectorAll('.stat-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.stat === which));
+}
+
+function jumpFilter(which) {
+  const panel = document.getElementById('brandPanel');
+  document.getElementById('q').value = '';
+  if (which === 'brands') {
+    const open = panel.classList.contains('hidden');
+    panel.classList.toggle('hidden', !open);
+    document.getElementById('avail').value = 'all';
+    document.getElementById('brand').value = '';
+    markStat('brands');
+    render();
+    document.getElementById('collection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
+  panel.classList.add('hidden');
+  document.getElementById('brand').value = '';
+  document.getElementById('avail').value = which;
+  markStat(which);
+  render();
+  document.getElementById('collection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function pickBrand(name) {
+  document.getElementById('brand').value = name;
+  document.getElementById('avail').value = 'all';
+  document.getElementById('q').value = '';
+  markStat('brands');
+  stats();
+  render();
+  document.getElementById('collection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function render() {
+  const qRaw = document.getElementById('q').value || '';
+  const q = expandQuery(fold(qRaw));
+  const b = document.getElementById('brand').value;
+  let list = products.filter(p => (!b || fold(prettyBrand(p.brand)) === fold(b) || fold(p.brand) === fold(b)) && visible(p));
+  let fuzzy = false;
+  if (q) {
+    const scored = list.map(p => ({ p, s: scoreBag(p, q) })).filter(x => x.s > 0);
+    const exact = scored.filter(x => x.s >= 100);
+    const use = exact.length ? exact : scored.sort((a, c) => c.s - a.s);
+    fuzzy = !exact.length && use.length > 0;
+    list = use.map(x => x.p);
+  }
+  const sort = (document.getElementById('sortBy') || {}).value || 'newest';
+  const dateOf = p => new Date(p.created_at || 0).getTime();
+  if (!q) {
+    list.sort((a,c) => {
+      if (sort === 'oldest') return dateOf(a) - dateOf(c);
+      if (sort === 'brand') return String(a.brand||'').localeCompare(c.brand||'') || String(a.bag_name||'').localeCompare(c.bag_name||'');
+      return dateOf(c) - dateOf(a);
+    });
+  }
+  const note = fuzzy ? 'Closest matches for “' + qRaw.trim() + '” · ' : '';
+  document.getElementById('sub').textContent = note + list.length + ' pieces in this view';
+  document.getElementById('grid').innerHTML = list.map(p => {
+    const st = getS(p.sku).status;
+    const sold = st === 'sold' ? 'sold-card' : '';
+    const src = LOCAL_MISSING.has(p.sku) ? ((p.image_url || (Array.isArray(p.gallery) && p.gallery[0]) || '')) : `images/${p.sku}.jpg`;
+    const fb = (p.image_url || '').replace(/'/g, '');
+    return `<button class="text-left group ${sold}" onclick="openItem('${p.sku}')">
+      <div class="aspect-square bg-white overflow-hidden flex items-center justify-center border border-[#14213D]/10">
+        <img src="${src}" alt="" class="max-w-full max-h-full w-full h-full object-contain p-2" onerror="if(this.dataset.fb!=='1'&&'${fb}'){this.dataset.fb='1';this.src='${fb}'}"/>
+      </div>
+      <p class="pill text-[#14213D]/70 mt-3">${prettyBrand(p.brand)}</p>
+      <p class="serif text-lg leading-tight mt-1">${p.bag_name || ''}</p>
+      <p class="text-[11px] tracking-[0.08em] text-[#14213D]/50 mt-1">SKU ${tagCode(p)}</p>
+      <div class="flex justify-between items-baseline mt-2 text-sm">
+        <span>${st === 'sold' ? '' : money(p.tnc)}</span>
+        <span class="pill">${label(st)}</span>
+      </div>
+      ${p.entrupy ? '<p class="pill text-[#14213D]/70 mt-2">Entrupy on file</p>' : ''}
+    </button>`;
+  }).join('') || '<p class="text-[#14213D]/50 col-span-3">No pieces in this view. Try All or another brand.</p>';
+}
+
+window.openItem = function(sku, opts) {
+  const current = findBag(sku) || products.find(p => p.sku === sku);
+  if (!current) return;
+  const st = getS(current.sku).status;
+  document.getElementById('mb').textContent = prettyBrand(current.brand);
+  document.getElementById('mt').textContent = current.bag_name || current.sku;
+  document.getElementById('msku').textContent = 'SKU ' + tagCode(current);
+  document.getElementById('mp').textContent = st === 'sold' ? '' : money(current.tnc);
+  const statusEl = document.getElementById('ms');
+  statusEl.textContent = label(st);
+  statusEl.className = 'pill mt-3' + (st === 'sold' ? ' text-red-800' : '');
+  const cert = document.getElementById('mentrupy');
+  if (current.entrupy) {
+    cert.href = current.entrupy;
+    cert.classList.remove('hidden');
+  } else {
+    cert.removeAttribute('href');
+    cert.classList.add('hidden');
+  }
+  const meas = (current.measurements || '').trim();
+  document.getElementById('mmeas').textContent = meas;
+  document.getElementById('mmeasWrap').classList.toggle('hidden', !meas);
+  const desc = (current.description || '').trim();
+  document.getElementById('mdesc').textContent = desc;
+  document.getElementById('mdescWrap').classList.toggle('hidden', !desc);
+  window.galleryShots = photosOf(current);
+  window.shotIndex = 0;
+  showShot(0);
+  document.getElementById('mthumbs').innerHTML = (window.galleryShots || []).map((src, i) => {
+    const safe = src.replace(/'/g, '');
+    return `<button type="button" class="h-14 w-14 border border-[#14213D]/15 overflow-hidden" onclick="showShot(${i})"><img src="${safe}" class="h-full w-full object-contain"/></button>`;
+  }).join('');
+  const shareSku = tagCode(current);
+  const subj = encodeURIComponent('Inquiry: ' + (current.brand || '') + ' ' + (current.bag_name || shareSku));
+  const priceBit = st === 'sold' ? '' : ' listed at ' + money(current.tnc);
+  const body = encodeURIComponent('Hello The Next Carry,\n\nI am interested in the ' + (current.brand || '') + ' ' + (current.bag_name || '') + ' (SKU ' + shareSku + ')' + priceBit + '.\n\nPlease let me know if it is still available.\n');
+  document.getElementById('mail').href = 'mailto:' + CONTACT + '?subject=' + subj + '&body=' + body;
+  const link = 'https://shop.thenextcarry.com/shop?sku=' + encodeURIComponent(shareSku);
+  document.getElementById('mlink').textContent = '';
+  document.getElementById('mlink').classList.add('hidden');
+  window.sharePayload = {
+    title: 'Shop The Next Carry',
+    text: (prettyBrand(current.brand) + ' ' + (current.bag_name || '')).trim(),
+    url: link
+  };
+  document.getElementById('mshareMsg').textContent = '';
+  if (!opts || !opts.fromQuery) setSkuParam(shareSku);
+  else setSkuParam(shareSku);
+  document.getElementById('modal').classList.remove('hidden');
+  document.getElementById('modal').classList.add('flex');
+};
+
+function closeModal() {
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('modal').classList.remove('flex');
+  closeZoom();
+  setSkuParam('');
+}
+function copyLink(text) {
+  try {
+    const box = document.createElement('textarea');
+    box.value = text;
+    box.setAttribute('readonly', '');
+    box.style.position = 'fixed';
+    box.style.top = '0';
+    box.style.left = '0';
+    box.style.opacity = '0';
+    document.body.appendChild(box);
+    box.focus();
+    box.select();
+    box.setSelectionRange(0, text.length);
+    const ok = document.execCommand('copy');
+    box.remove();
+    if (ok) return true;
+  } catch (e) {}
+  if (navigator.clipboard) return navigator.clipboard.writeText(text).then(() => true).catch(() => false);
+  return false;
+}
+function showShareChoices() {
+  const sheet = document.getElementById('shareSheet');
+  const payload = window.sharePayload || { title: 'Shop The Next Carry', text: '', url: location.href };
+  const note = [payload.text, payload.url].filter(Boolean).join('\n');
+  document.getElementById('shareMessages').href = 'sms:&body=' + encodeURIComponent(note);
+  document.getElementById('shareMail').href = 'mailto:?subject=' + encodeURIComponent(payload.title || 'Shop The Next Carry') + '&body=' + encodeURIComponent(note);
+  sheet.classList.remove('hidden');
+  document.getElementById('mshareMsg').textContent = '';
+}
+document.getElementById('mshare').onclick = async () => {
+  const payload = window.sharePayload || { title: 'Shop The Next Carry', text: '', url: location.href };
+  document.getElementById('mlink').classList.add('hidden');
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: payload.title, text: payload.text, url: payload.url });
+      document.getElementById('shareSheet').classList.add('hidden');
+      return;
+    } catch (e) {
+      if (e && e.name === 'AbortError') return;
+    }
+  }
+  showShareChoices();
+};
+document.getElementById('shareCopy').onclick = async () => {
+  const payload = window.sharePayload || { url: location.href };
+  const ok = await copyLink(payload.url);
+  document.getElementById('mshareMsg').textContent = ok ? 'Link copied.' : payload.url;
+};
+document.getElementById('mcX').onclick = closeModal;
+document.getElementById('modal').onclick = (e) => { if (e.target.id === 'modal') closeModal(); };
+document.getElementById('mi').onclick = openZoom;
+document.getElementById('prevShot').onclick = (e) => { e.stopPropagation(); showShot(window.shotIndex - 1); };
+document.getElementById('nextShot').onclick = (e) => { e.stopPropagation(); showShot(window.shotIndex + 1); };
+document.getElementById('zoomPrev').onclick = (e) => { e.stopPropagation(); showShot(window.shotIndex - 1); };
+document.getElementById('zoomNext').onclick = (e) => { e.stopPropagation(); showShot(window.shotIndex + 1); };
+document.getElementById('zoomClose').onclick = closeZoom;
+document.getElementById('zoom').onclick = (e) => { if (e.target.id === 'zoom') closeZoom(); };
+document.addEventListener('keydown', (e) => {
+  const zoomOn = !document.getElementById('zoom').classList.contains('hidden');
+  const modalOn = !document.getElementById('modal').classList.contains('hidden');
+  if (!zoomOn && !modalOn) return;
+  if (e.key === 'ArrowLeft') showShot(window.shotIndex - 1);
+  if (e.key === 'ArrowRight') showShot(window.shotIndex + 1);
+  if (e.key === 'Escape' && zoomOn) { closeZoom(); return; }
+  if (e.key === 'Escape' && modalOn) closeModal();
+});
+document.getElementById('q').oninput = render;
+document.getElementById('brand').onchange = () => { markStat(document.getElementById('brand').value ? 'brands' : ''); stats(); render(); };
+document.getElementById('avail').onchange = () => {
+  const v = document.getElementById('avail').value;
+  markStat(v === 'shop' || v === 'sold' || v === 'soon' ? v : '');
+  render();
+};
+document.getElementById('sortBy').onchange = render;
+
+async function start() {
+  const c = cfg();
+  const box = document.getElementById('err');
+  if (!c?.url || !c?.key) {
+    box.textContent = 'Add your Supabase URL and key to shop.html (the PASTE_ lines), then re-upload the folder.';
+    box.classList.remove('hidden');
+    return;
+  }
+  const sb = window.supabase.createClient(c.url, c.key);
+  const cols = 'sku,tnc_sku,sheet,brand,bag_name,tnc,image_url,entrupy,gallery,hidden_photos,measurements,created_at,description';
+  const colsSafe = 'sku,sheet,brand,bag_name,tnc,image_url,entrupy,gallery,hidden_photos';
+  const colsOld = 'sku,sheet,brand,bag_name,tnc,image_url,entrupy,gallery,hidden_photos';
+  let prodsRes = await sb.from('products').select(cols).order('brand');
+  if (prodsRes.error) prodsRes = await sb.from('products').select(colsSafe).order('brand');
+  if (prodsRes.error) prodsRes = await sb.from('products').select(colsOld).order('brand');
+  const stRes = await sb.from('inventory_state').select('sku,status');
+  const e1 = prodsRes.error, e2 = stRes.error, prods = prodsRes.data, st = stRes.data;
+  if (e1 || e2) {
+    box.textContent = 'Catalog could not load. Run public-shop.sql and measurements.sql in Supabase SQL Editor. ' + (e1?.message || e2?.message || '');
+    box.classList.remove('hidden');
+    return;
+  }
+  products = prods || [];
+  state = {};
+  (st || []).forEach(r => state[r.sku] = r);
+  const brands = uniqueBrands();
+  document.getElementById('brand').innerHTML = '<option value="">All brands</option>' + brands.map(b => `<option>${b}</option>`).join('');
+  stats();
+  render();
+  openFromQuery();
+  try {
+    sb.channel('boutique')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory_state' }, async () => {
+        const { data } = await sb.from('inventory_state').select('sku,status');
+        state = {};
+        (data || []).forEach(r => state[r.sku] = r);
+        stats();
+        render();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, async () => {
+        let { data } = await sb.from('products').select('sku,tnc_sku,sheet,brand,bag_name,tnc,image_url,entrupy,gallery,hidden_photos,measurements,created_at,description').order('brand');
+        if (!data) {
+          const fallback = await sb.from('products').select('sku,sheet,brand,bag_name,tnc,image_url,entrupy,gallery,hidden_photos').order('brand');
+          data = fallback.data;
+        }
+        products = data || [];
+        stats();
+        render();
+        openFromQuery();
+      })
+      .subscribe();
+  } catch (e) {}
+}
+start();
+</script>
+</body>
+</html>

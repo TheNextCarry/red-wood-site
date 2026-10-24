@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Shop The Next Carry</title>
+  <meta property="og:title" content="Shop The Next Carry" />
+  <meta property="og:description" content="Authenticated pre-loved Chanel, Hermès, Louis Vuitton and more." />
+  <meta property="og:image" content="https://shop.thenextcarry.com/images/apple-touch-icon.png" />
+  <link rel="icon" href="images/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="images/favicon-32.png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="images/apple-touch-icon.png" />
+  <script>
+    if (location.hostname === 'shop.thenextcarry.com') location.replace('/shop' + location.search + location.hash);
+    else document.title = 'TNC Inventory OS';
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    html, body { overflow-x: hidden; }
+    input, select, textarea { font-size: 16px; }
+    @media (max-width: 768px) {
+      #modal { padding: 0; align-items: stretch !important; }
+      #modalCard { max-height: 100dvh; height: 100dvh; border-radius: 0; }
+    }
+    .nav-item.active { background: #134e4a; color: #fff; }
+    .status-in-stock { background: #dcfce7; color: #166534; }
+    .status-sold { background: #fee2e2; color: #991b1b; }
+    .status-reserved { background: #fef3c7; color: #92400e; }
+    .status-coming { background: #e0e7ff; color: #3730a3; }
+    .status-on-order { background: #ffedd5; color: #9a3412; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800">
+  <!-- Setup -->
+  <div id="screen-setup" class="hidden min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white max-w-lg w-full rounded-2xl border p-8 shadow-sm">
+      <p class="text-[11px] uppercase tracking-[0.2em] text-teal-700">TNC Atelier</p>
+      <h1 class="text-2xl font-semibold mt-1">Connect your free cloud</h1>
+      <p class="text-sm text-slate-500 mt-2">Paste the two values from Supabase → Project Settings → API. This stays in this browser until you save it.</p>
+      <label class="block text-sm mt-5">Project URL
+        <input id="cfgUrl" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="https://xxxx.supabase.co" />
+      </label>
+      <label class="block text-sm mt-3">anon public key
+        <textarea id="cfgKey" rows="3" class="mt-1 w-full border rounded-lg px-3 py-2 font-mono text-xs"></textarea>
+      </label>
+      <p id="cfgErr" class="text-red-600 text-sm mt-3 hidden"></p>
+      <button id="cfgSave" class="mt-5 w-full bg-teal-700 text-white rounded-lg py-2.5">Save and continue</button>
+      <p class="text-xs text-slate-400 mt-4">Need the steps? Open SETUP.md in this folder.</p>
+    </div>
+  </div>
+
+  <!-- Auth -->
+  <div id="screen-auth" class="hidden min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white max-w-md w-full rounded-2xl border p-8 shadow-sm">
+      <p class="text-[11px] uppercase tracking-[0.2em] text-teal-700">TNC Atelier</p>
+      <h1 class="text-2xl font-semibold mt-1">Team sign in</h1>
+      <p class="text-sm text-slate-500 mt-2">Same link for everyone. Each person uses their own email.</p>
+      <label class="block text-sm mt-5">Email
+        <input id="authEmail" type="email" class="mt-1 w-full border rounded-lg px-3 py-2" />
+      </label>
+      <label class="block text-sm mt-3">Password
+        <input id="authPass" type="password" class="mt-1 w-full border rounded-lg px-3 py-2" />
+      </label>
+      <p id="authErr" class="text-red-600 text-sm mt-3 hidden"></p>
+      <div class="grid grid-cols-2 gap-3 mt-5">
+        <button id="btnLogin" class="bg-teal-700 text-white rounded-lg py-2.5">Sign in</button>
+        <button id="btnSignup" class="border rounded-lg py-2.5">Create account</button>
+      </div>
+      <button id="btnResetCfg" class="mt-4 text-xs text-slate-400">Change cloud keys</button>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="screen-app" class="hidden min-h-screen md:flex">
+    <aside class="w-64 bg-slate-950 text-slate-200 hidden md:flex flex-col">
+      <div class="px-5 py-6 border-b border-slate-800">
+        <p class="text-[11px] uppercase tracking-[0.2em] text-teal-400">TNC Atelier</p>
+        <h1 class="text-xl font-semibold text-white mt-1">Inventory OS</h1>
+        <p class="text-xs text-slate-400 mt-1">Shared · free cloud</p>
+      </div>
+      <nav class="p-3 space-y-1 flex-1">
+        <button data-view="dash" class="nav-item active w-full text-left px-3 py-2 rounded-lg text-sm">Dashboard</button>
+        <button data-view="inv" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800">Inventory</button>
+        <button data-view="sold" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800">Sold / reserved</button>
+        <button data-view="order" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800">Coming soon</button>
+        <button data-view="add" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800">Add bag</button>
+        <button data-view="team" class="nav-item w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-slate-800">Team &amp; activity</button>
+      </nav>
+      <div class="p-4 border-t border-slate-800 text-xs text-slate-400">
+        <div>Signed in as <span id="who" class="text-white"></span></div>
+        <button id="btnOut" class="mt-2 text-teal-400">Sign out</button>
+      </div>
+    </aside>
+
+    <main class="flex-1 min-w-0">
+      <nav class="md:hidden bg-slate-950 text-slate-200 overflow-x-auto flex gap-1 px-2 py-2">
+        <button data-view="dash" class="nav-item active shrink-0 px-3 py-2 rounded-lg text-xs">Dashboard</button>
+        <button data-view="inv" class="nav-item shrink-0 px-3 py-2 rounded-lg text-xs">Inventory</button>
+        <button data-view="sold" class="nav-item shrink-0 px-3 py-2 rounded-lg text-xs">Sold</button>
+        <button data-view="order" class="nav-item shrink-0 px-3 py-2 rounded-lg text-xs">Coming soon</button>
+        <button data-view="add" class="nav-item shrink-0 px-3 py-2 rounded-lg text-xs">Add</button>
+        <button data-view="team" class="nav-item shrink-0 px-3 py-2 rounded-lg text-xs">Team</button>
+      </nav>
+      <header class="bg-white border-b px-4 md:px-6 py-4 flex items-center justify-between gap-3">
+        <div>
+          <h2 id="pageTitle" class="text-lg font-semibold">Dashboard</h2>
+          <p id="pageSub" class="text-xs text-slate-500">Live shared inventory</p>
+        </div>
+        <button id="btnRefresh" class="text-sm px-3 py-1.5 rounded-lg border">Refresh</button>
+      </header>
+
+      <section id="view-dash" class="p-4 md:p-6 space-y-6">
+        <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4" id="statCards"></div>
+        <div class="grid lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-2 bg-white rounded-2xl border p-5">
+            <h3 class="font-semibold mb-3">Value by brand <span class="text-xs font-normal text-slate-400">— click a brand to open its bags</span></h3>
+            <div id="brandBars" class="space-y-3"></div>
+          </div>
+          <div class="bg-white rounded-2xl border p-5">
+            <h3 class="font-semibold mb-3">Activity</h3>
+            <ul id="activity" class="space-y-3 text-sm"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-inv" class="p-4 md:p-6 hidden">
+        <div class="bg-white rounded-2xl border p-4 mb-4 flex flex-wrap gap-3">
+          <input id="q" placeholder="Search SKU, TBC order #, brand, bag..." class="flex-1 min-w-[180px] border rounded-lg px-3 py-2 text-sm" />
+          <select id="brand" class="border rounded-lg px-3 py-2 text-sm"><option value="">All brands</option></select>
+          <select id="stFilter" class="border rounded-lg px-3 py-2 text-sm">
+            <option value="">All status</option>
+            <option value="in-stock">In stock</option>
+            <option value="reserved">Pending</option>
+            <option value="sold">Sold</option>
+            <option value="coming">Coming soon</option>
+          </select>
+          <select id="sortBy" class="border rounded-lg px-3 py-2 text-sm">
+            <option value="newest">Sort: Newest</option>
+            <option value="oldest">Sort: Oldest</option>
+            <option value="sku">Sort: SKU</option>
+            <option value="sku-desc">Sort: SKU Z–A</option>
+            <option value="brand">Sort: Brand</option>
+            <option value="name">Sort: Bag name</option>
+            <option value="tnc">Sort: TNC high–low</option>
+            <option value="margin">Sort: Margin $ high–low</option>
+            <option value="margin-pct">Sort: Margin % high–low</option>
+          </select>
+          <button id="btnExport" class="text-sm px-3 py-2 rounded-lg border bg-white">Export CSV</button>
+        </div>
+        <div id="grid" class="grid grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4"></div>
+      </section>
+
+      <section id="view-sold" class="p-4 md:p-6 hidden">
+        <div class="bg-white rounded-2xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-left text-slate-500">
+              <tr id="soldHead"></tr>
+            </thead>
+            <tbody id="soldRows"></tbody>
+          </table>
+          <p id="soldEmpty" class="p-8 text-center text-slate-400">Nothing reserved or sold yet.</p>
+        </div>
+      </section>
+
+      <section id="view-order" class="p-4 md:p-6 hidden">
+        <div class="bg-white rounded-2xl border overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-left text-slate-500">
+              <tr id="orderHead"></tr>
+            </thead>
+            <tbody id="orderRows"></tbody>
+          </table>
+          <p id="orderEmpty" class="p-8 text-center text-slate-400">Nothing coming soon.</p>
+        </div>
+      </section>
+
+      <section id="view-add" class="p-4 md:p-6 hidden">
+        <div class="bg-white rounded-2xl border p-6 max-w-xl space-y-3">
+          <h3 class="font-semibold text-lg">Add a bag</h3>
+          <p class="text-sm text-slate-500">You do this here — not in Cloudflare, and you do not need to send the bag to Grok first.</p>
+          <label class="block text-sm">SKU *<input id="addSku" class="mt-1 w-full border rounded-lg px-3 py-2" placeholder="unique id" /></label>
+          <label class="block text-sm">Brand *<input id="addBrand" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+          <label class="block text-sm">Bag name *<input id="addName" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+          <label class="block text-sm">Vendor<input id="addVendor" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block text-sm">Landed (cost)<input id="addLanded" type="number" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+            <label class="block text-sm">TNC (sell)<input id="addTnc" type="number" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+          </div>
+          <label class="block text-sm">Status
+            <select id="addStatus" class="mt-1 w-full border rounded-lg px-3 py-2">
+              <option value="in-stock">In Stock</option>
+              <option value="coming">Coming soon</option>
+              <option value="reserved">Pending</option>
+              <option value="coming">Coming Soon</option>
+            </select>
+          </label>
+          <label class="block text-sm">Entrupy link<input id="addEntrupy" class="mt-1 w-full border rounded-lg px-3 py-2" /></label>
+          <label class="block text-sm">Photo
+            <input id="addPhoto" type="file" accept="image/*" multiple class="mt-1 w-full text-sm" />
+            <span class="text-xs text-slate-500">First photo is the cover. You can pick several.</span>
+          </label>
+          <p id="addMsg" class="text-sm text-slate-500"></p>
+          <button id="addSave" class="w-full bg-teal-700 text-white rounded-lg py-2.5">Save bag</button>
+        </div>
+
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-6 max-w-xl space-y-3 mt-6">
+          <h3 class="font-semibold text-lg">Load a whole photo folder</h3>
+          <p class="text-sm text-amber-900">Unzip your 4 picture zips. Click the box below and choose the folder that <b>contains the SKU folders</b> (The-Next-Carry or 3815-and-3904). Every bag uploads at once. Stay on this page until it says done.</p>
+          <label class="block text-sm">Choose folder
+            <input id="folderPhotos" type="file" webkitdirectory directory multiple class="mt-1 w-full text-sm" />
+          </label>
+          <button id="folderGo" class="w-full bg-teal-800 text-white rounded-lg py-2.5">Upload all photos in that folder</button>
+          <p id="folderMsg" class="text-sm text-slate-700 whitespace-pre-wrap"></p>
+        </div>
+
+        <div class="bg-white rounded-2xl border p-6 max-w-5xl space-y-4 mt-6">
+          <h3 class="font-semibold text-lg">Add several bags at once</h3>
+          <p class="text-sm text-slate-500">Fill the boxes. Click + Add another bag for more rows. Or upload an Excel/CSV from the price list.</p>
+          <div class="flex flex-wrap gap-3 items-end">
+            <label class="block text-sm">Upload spreadsheet (.csv)
+              <input id="bulkCsv" type="file" accept=".csv,text/csv" class="mt-1 text-sm" />
+            </label>
+            <label class="block text-sm">Photos for this batch (name files as the SKU)
+              <input id="bulkPhotos" type="file" accept="image/*" multiple class="mt-1 text-sm" />
+            </label>
+          </div>
+          <div id="bulkRows" class="space-y-3"></div>
+          <button id="bulkAddRow" type="button" class="text-sm px-3 py-2 rounded-lg border">+ Add another bag</button>
+          <p id="bulkMsg" class="text-sm text-slate-500"></p>
+          <button id="bulkSave" class="w-full bg-teal-700 text-white rounded-lg py-2.5">Save all bags</button>
+          <textarea id="bulkText" class="hidden"></textarea>
+        </div>
+      </section>
+
+      <section id="view-team" class="p-4 md:p-6 hidden space-y-4">
+        <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-sm text-amber-900">
+          Invite teammates by sending them this website link. They create their own account. Status changes they make show up here after Refresh.
+        </div>
+        <div id="teamList" class="bg-white rounded-2xl border divide-y"></div>
+        <div class="bg-white rounded-2xl border p-5">
+          <h3 class="font-semibold mb-3">Full activity</h3>
+          <ul id="activityFull" class="space-y-2 text-sm"></ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center p-4 z-50">
+    <div id="modalCard" class="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+      <div class="flex justify-between items-start mb-4">
+        <h3 id="mt" class="text-xl font-semibold pr-6"></h3>
+        <button id="mc" class="text-2xl text-slate-400">&times;</button>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <img id="mi" class="w-full rounded-xl bg-slate-100 object-contain max-h-80" alt="" />
+          <div id="mthumbs" class="flex flex-wrap gap-2 mt-2"></div>
+          <label class="block text-sm mt-3">Add more photos
+            <input id="mMore" type="file" accept="image/*" multiple class="mt-1 w-full text-sm" />
+          </label>
+        </div>
+        <div class="space-y-3 text-sm">
+          <p>SKU <span id="ms" class="font-mono font-semibold"></span></p>
+          <p class="text-sm text-slate-500">TBC order <span id="morder" class="font-mono font-semibold text-slate-800"></span></p>
+          <label class="block">Brand
+            <input id="mbrand" class="w-full border rounded-lg px-3 py-2 mt-1" />
+          </label>
+          <label class="block">Bag name
+            <input id="mname" class="w-full border rounded-lg px-3 py-2 mt-1" />
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block">Landed (cost)
+              <input id="mlanded" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" />
+            </label>
+            <label class="block">TNC (sell)
+              <input id="mtnc" type="number" class="w-full border rounded-lg px-3 py-2 mt-1" />
+            </label>
+          </div>
+          <p id="mm" class="text-teal-700"></p>
+          <label class="block">Measurements
+            <textarea id="mmeas" class="w-full border rounded-lg px-3 py-2 mt-1" rows="2" placeholder="W 10 in × H 8 in × D 4 in · strap drop 20 in"></textarea>
+          </label>
+          <label class="block">Condition / description
+            <textarea id="mdesc" class="w-full border rounded-lg px-3 py-2 mt-1" rows="4" placeholder="Condition notes from the invoice"></textarea>
+          </label>
+          <label class="block">Entrupy link
+            <input id="mentrupy" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="https://cert.entrupy.com/…" />
+          </label>
+          <a id="me" class="text-teal-700 break-all text-xs" target="_blank" rel="noopener"></a>
+          <label class="block">QR / tag link
+            <input id="mqr" readonly class="w-full border rounded-lg px-3 py-2 mt-1 text-xs" />
+          </label>
+          <label class="block">Status
+            <select id="mst" class="w-full border rounded-lg px-3 py-2 mt-1">
+              <option value="in-stock">In Stock</option>
+              <option value="reserved">Pending</option>
+              <option value="sold">Sold</option>
+              <option value="coming">Coming Soon</option>
+              <option value="coming">Coming soon</option>
+            </select>
+          </label>
+          <label class="block">Qty
+            <input id="mqty" type="number" min="0" class="w-full border rounded-lg px-3 py-2 mt-1" />
+          </label>
+          <label class="block">Notes
+            <textarea id="mnotes" class="w-full border rounded-lg px-3 py-2 mt-1" rows="3"></textarea>
+          </label>
+          <button id="msave" class="w-full bg-teal-700 text-white rounded-lg py-2">Save and Close</button>
+          <p id="msaveMsg" class="text-xs text-slate-500">Changes save by themselves.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const CFG_KEY = 'tnc_sb_cfg';
+// Team shortcut: fill these two lines so nobody sees "Connect your free cloud".
+const BAKED_URL = 'https://rcjriebqvyxuqfqxibfx.supabase.co';
+const BAKED_KEY = 'sb_publishable_FgB3bBqEH-PgzgnC7EI8zQ_ADRYUw5C';
+let sb = null, user = null, products = [], state = {}, logs = [], current = null;
+
+const money = n => (n == null || n === '') ? '—' : Number(n).toLocaleString('en-US', {style:'currency', currency:'USD', maximumFractionDigits:0});
+const brandKey = s => (s || '').trim().toLowerCase();
+function prettyBrand(s) {
+  const k = brandKey(s);
+  const map = {
+    'louis vuitton': 'Louis Vuitton',
+    'celine': 'Celine',
+    'chanel': 'Chanel',
+    'fendi': 'Fendi',
+    'gucci': 'Gucci',
+    'dior': 'Dior',
+    'christian dior': 'Dior',
+    'hermes': 'Hermès',
+    'hermès': 'Hermès',
+    'bottega veneta': 'Bottega Veneta',
+    'saint laurent': 'Saint Laurent',
+    'ysl': 'Saint Laurent',
+    'yves saint laurent': 'Saint Laurent',
+    'yves saint-laurent': 'Saint Laurent',
+    'prada': 'Prada',
+    'loewe': 'Loewe',
+    'ferragamo': 'Ferragamo',
+    'salvatore ferragamo': 'Ferragamo'
+  };
+  if (map[k]) return map[k];
+  const t = (s || '').trim();
+  if (!t) return '';
+  return t.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+}
+const getS = sku => state[sku] || {status:'in-stock', qty:1, notes:'', updated_by_email:'', updated_at:null};
+function statusLabel(st) {
+  if (st === 'on-order' || st === 'coming') return 'Coming soon';
+  if (st === 'in-stock') return 'In stock';
+  if (st === 'reserved') return 'Pending';
+  if (st === 'sold') return 'Sold';
+  return (st || '').replace('-', ' ');
+}
+function statusClass(st) {
+  return (st === 'on-order') ? 'coming' : (st || 'in-stock');
+}
+const LOCAL_EXTRA = { '1gn409a18lv': 1, '1r1syvawwvo': 15, '2upy7p8nawn': 11, '2yga8h2oyq3': 12, '34btshtucd3': 15, '3b7puhavzfb': 11, '3ggxhlvh9vy': 8, '533hc6q1rdp': 11, '5442t9ryohb': 17, '5pqmpl28ggn': 12, '6lrs0na88qm': 16, '769ehjlqt2v': 16, '7a6656o62y8': 11, '7v922ewffrt': 15, '8ex0fvtz1dl': 13, '8gukrfid3vf': 15, '8q4gn607978': 13, '933sns3jtg4': 13, '9lhytyhvf3w': 19, 'an1mf1th9bp': 15, 'cezpy9v1yve': 19, 'cgx7rrebh2k': 9, 'chd0y624xb': 14, 'd9gy6eqcd3m': 9, 'eco6i7ycgv': 11, 'f0l4qhvp3rl': 13, 'fa8yhqyqpiq': 15, 'fhbpamf0vj': 14, 'fx8jma5jhvv': 15, 'g3awi4elmn8': 16, 'gdkvu102fg': 13, 'gvsmi5f3j': 7, 'hgwa8kb1ni': 18, 'i7hsmgnw9qk': 13, 'ivgg8ybbxbo': 17, 'j65fttdu7t': 11, 'jp188m3snt9': 10, 'kdm8p65l9n': 14, 'logsf8kl89n': 8, 'm220vbykko': 10, 'mfxgl3vo1l': 16, 'mtfcna8kwab': 13, 'ovcxvy0h3zh': 16, 'pw16wcjjxw': 11, 'q2led5hi63d': 10, 'qdpxxwewwdd': 20, 'qk0r7bx2bwq': 11, 'u15gdm2xep': 10, 'uksk2evzysq': 15, 'uo7e1889emj': 15, 'uq2wldh14w': 19, 'vlwhyz7bch7': 11, 'vnnig2r28h': 11, 'vv6ru0ayw1': 20, 'wm0atcgb4pe': 13, 'x3i5d375b6': 10, 'xfb18at34xr': 11, 'yd6swnlem1m': 17, 'yivvowa52o': 15, 'yl097yrsyg': 11, 'ypob7s9doqj': 12, 'yyto4mi7da': 13 };
+const LOCAL_MISSING = new Set(['2qqnadk7omg','2hatte1s72','5tr22eatgiw','5pqmpl28ggn','7992g19qey8','6uyynyf66hk','g3awi4elmn8','yivvowa52o','med14h4pdf','1r1syvawwvo','logsf8kl89n','vv6ru0ayw1','uit4cwn85we','d1lmxv497bo','moadsnd0jm8','fbx4fyhyjp8','un6em6q0lxf','04vbx0hpjtb3','gxqb0x2l22q','s36ydd8jv8g','ikx51w22a5r','wp471fpgfpf','6lrs0na88qm','2dio2w8uzod','3ly5524jvdz','6f5ac8k85li','8rmb9x4be2','84vsnv7rd7','730uuq9awom','ujzwec9kmt','r2vohi6cafo','9mr5zjm8av6','9a12u4ccch','a7ygent5rcw','an1mf1th9bp','fghdo50acdm','dv1r4uw8wuk','u26r56jg0zs','5x2qxt4xxvv','fx8jma5jhvv','mfxgl3vo1l','pw16wcjjxw','seu4f4bcvr','wupw23qho3c','yt4e7vr0ym','1spxtflfxpkj','8t1icytpm5h','gezu4d7qvv4','l3wyb0iay8o','oljkhcgzqda','vy32luziv7','trlts5atcq']);
+function extraLocal(sku) {
+  if (typeof LOCAL_MISSING !== 'undefined' && LOCAL_MISSING.has(sku)) return [];
+  const n = LOCAL_EXTRA[sku] || 1;
+  const out = [];
+  for (let i = 2; i <= n; i++) out.push('images/' + sku + '-' + String(i).padStart(2,'0') + '.jpg');
+  return out;
+}
+function photosOf(p) {
+  const hidden = new Set(Array.isArray(p?.hidden_photos) ? p.hidden_photos : []);
+  const g = Array.isArray(p?.gallery) ? p.gallery : [];
+  const local = (typeof LOCAL_MISSING !== 'undefined' && LOCAL_MISSING.has(p.sku)) ? null : ('images/' + p.sku + '.jpg');
+  const all = [local, p.image_url, ...g, ...extraLocal(p.sku)].filter(u => u && !hidden.has(u));
+  return [...new Set(all)];
+}
+async function uploadBagPhotos(sku, files) {
+  const urls = [];
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.jpg';
+    const path = sku + '/' + Date.now() + '-' + i + ext;
+    const up = await sb.storage.from('bags').upload(path, file, { upsert: true, contentType: file.type });
+    if (!up.error) urls.push(sb.storage.from('bags').getPublicUrl(path).data.publicUrl);
+  }
+  return urls;
+}
+function paintThumbs(p) {
+  const box = document.getElementById('mthumbs');
+  const list = photosOf(p);
+  box.innerHTML = list.map(src => {
+    const safe = src.replace(/'/g, "\\'");
+    return `<div class="relative h-14 w-14 border rounded overflow-hidden bg-slate-50">
+      <button type="button" class="h-full w-full" onclick="document.getElementById('mi').src='${safe}'"><img src="${src}" class="h-full w-full object-contain"/></button>
+      <button type="button" class="absolute top-0 right-0 bg-red-600 text-white text-[10px] leading-none px-1" title="Remove photo" onclick="event.stopPropagation(); deletePhoto('${p.sku}','${safe}')">×</button>
+    </div>`;
+  }).join('');
+}
+window.deletePhoto = async function(sku, url) {
+  const p = products.find(x => x.sku === sku);
+  if (!p) return;
+  const hidden = Array.isArray(p.hidden_photos) ? [...p.hidden_photos] : [];
+  if (!hidden.includes(url)) hidden.push(url);
+  let gallery = (Array.isArray(p.gallery) ? p.gallery : []).filter(u => u !== url);
+  let image_url = p.image_url === url ? null : p.image_url;
+  const left = ['images/' + sku + '.jpg', image_url, ...gallery, ...extraLocal(sku)].filter(u => u && !hidden.includes(u));
+  if (!image_url) image_url = left.find(u => u.startsWith('http')) || p.image_url;
+  const { error } = await sb.from('products').update({ hidden_photos: hidden, gallery, image_url }).eq('sku', sku);
+  if (error) {
+    document.getElementById('msaveMsg').textContent = error.message + ' — run the hidden_photos SQL if asked';
+    return;
+  }
+  p.hidden_photos = hidden;
+  p.gallery = gallery;
+  p.image_url = image_url;
+  const shots = photosOf(p);
+  document.getElementById('mi').src = shots[0] || '';
+  paintThumbs(p);
+  document.getElementById('msaveMsg').textContent = 'Photo removed for the whole team.';
+};
+
+function show(id) {
+  ['screen-setup','screen-auth','screen-app'].forEach(s => {
+    document.getElementById(s).classList.toggle('hidden', s !== id);
+  });
+}
+
+function cfg() {
+  if (BAKED_URL.startsWith('http') && BAKED_KEY.length > 20 && !BAKED_URL.includes('PASTE_')) {
+    return { url: BAKED_URL.trim(), key: BAKED_KEY.trim() };
+  }
+  try { return JSON.parse(localStorage.getItem(CFG_KEY) || 'null'); } catch { return null; }
+}
+
+function makeClient() {
+  const c = cfg();
+  if (!c?.url || !c?.key) return null;
+  return window.supabase.createClient(c.url, c.key);
+}
+
+function imgSrc(p) {
+  if (!p) return '';
+  if (LOCAL_MISSING.has(p.sku)) return p.image_url || (Array.isArray(p.gallery) && p.gallery[0]) || '';
+  return `images/${p.sku}.jpg`;
+}
+
+async function start() {
+  const c = cfg();
+  if (!c?.url || !c?.key) { show('screen-setup'); return; }
+  sb = makeClient();
+  const { data } = await sb.auth.getSession();
+  if (!data.session) { show('screen-auth'); return; }
+  user = data.session.user;
+  await ensureProfile();
+  show('screen-app');
+  document.getElementById('who').textContent = user.email;
+  await loadAll();
+}
+
+async function ensureProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+  if (!data) {
+    const { count } = await sb.from('profiles').select('*', { count: 'exact', head: true });
+    const role = (count || 0) === 0 ? 'owner' : 'sales';
+    await sb.from('profiles').insert({ id: user.id, email: user.email, display_name: user.email, role });
+  }
+}
+
+async function loadAll() {
+  const [{ data: prods, error: e1 }, { data: st }, { data: act }] = await Promise.all([
+    sb.from('products').select('*').order('brand'),
+    sb.from('inventory_state').select('*'),
+    sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(40)
+  ]);
+  if (e1) {
+    document.getElementById('pageSub').textContent = 'Could not load products. Run schema.sql in Supabase.';
+    products = [];
+  } else {
+    products = prods || [];
+  }
+  state = {};
+  (st || []).forEach(r => state[r.sku] = r);
+  logs = act || [];
+  fillBrandFilter();
+  renderDash(); renderGrid(); renderSold(); renderOrder(); renderTeam();
+}
+
+function fillBrandFilter() {
+  const sel = document.getElementById('brand');
+  const cur = sel.value;
+  const brands = [...new Map(products.map(p => [brandKey(prettyBrand(p.brand)), prettyBrand(p.brand)]).filter(x => x[1])).values()].filter(Boolean).sort((a,c) => a.localeCompare(c));
+  sel.innerHTML = '<option value="">All brands</option>' + brands.map(b => `<option>${b}</option>`).join('');
+  sel.value = cur;
+}
+
+function isComp(p) {
+  return String((p && p.sheet) || '').toLowerCase().includes('lost tbc');
+}
+
+function renderDash() {
+  const owned = products.filter(p => !isComp(p));
+  const cost = owned.reduce((s,p)=>s+Number(p.landed||0),0);
+  const sell = owned.reduce((s,p)=>s+Number(p.tnc||0),0);
+  const sold = owned.filter(p => getS(p.sku).status==='sold').length;
+  const reserved = owned.filter(p => getS(p.sku).status==='reserved').length;
+  const coming = owned.filter(p => ['on-order','coming'].includes(getS(p.sku).status)).length;
+  const inStock = owned.filter(p => getS(p.sku).status==='in-stock').length;
+  const comps = products.length - owned.length;
+  document.getElementById('pageSub').textContent = inStock + ' in stock · ' + sold + ' sold · ' + coming + ' coming soon' + (comps ? ' · ' + comps + ' missed auctions' : '');
+  const soldBags = owned.filter(p => getS(p.sku).status === 'sold');
+  const gross = soldBags.reduce((s, p) => s + Number(p.tnc || 0), 0);
+  const soldCost = soldBags.reduce((s, p) => s + Number(p.landed || 0), 0);
+  const net = gross - soldCost;
+  const margin = gross ? Math.round((net / gross) * 1000) / 10 : 0;
+  document.getElementById('statCards').innerHTML = [
+    ['In stock', inStock, reserved ? reserved + ' pending' : 'Ready to sell', 'inv', 'in-stock'],
+    ['Sold', sold, 'Marked sold by the team', 'sold', ''],
+    ['Coming soon', coming, 'Not here yet', 'order', ''],
+    ['Pieces', owned.length, comps ? comps + ' missed auctions, not counted above' : 'Bags we own', 'dash', '']
+  ].map(([k,v,s,view,filter]) => `<button type="button" class="bg-white rounded-2xl border p-5 text-left hover:border-teal-700" onclick="openStat('${view}','${filter}')"><p class="text-xs text-slate-500">${k}</p><p class="text-2xl font-semibold mt-1">${v}</p><p class="text-xs text-slate-400 mt-1">${s}</p></button>`).join('')
+    + [
+      ['Gross sales', money(gross), 'TNC price of sold bags'],
+      ['Net sales', money(net), 'Gross sales minus landed cost'],
+      ['Profit margin', margin + '%', 'Net sales divided by gross sales'],
+      ['Inventory cost', money(cost), 'Sum of Landed on bags we own'],
+      ['Retail book', money(sell), 'Sum of TNC on bags we own']
+    ].map(([k,v,s]) => `<div class="bg-white rounded-2xl border p-5"><p class="text-xs text-slate-500">${k}</p><p class="text-2xl font-semibold mt-1">${v}</p><p class="text-xs text-slate-400 mt-1">${s}</p></div>`).join('');
+
+  const by = {};
+  owned.forEach(p => { const b=prettyBrand(p.brand)||'Other'; by[b]=(by[b]||0)+Number(p.tnc||0); });
+  const items = Object.entries(by).sort((a,c)=>c[1]-a[1]);
+  const max = items[0]?.[1] || 1;
+  document.getElementById('brandBars').innerHTML = items.map(([b,v]) => {
+    const safe = String(b).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    return `<button type="button" class="w-full text-left rounded-lg px-1 py-1 -mx-1 hover:bg-slate-50" data-brand="${safe}" onclick="openBrand(this)">
+      <div class="flex justify-between text-xs mb-1"><span class="text-teal-800 underline-offset-2 group-hover:underline">${safe}</span><span>${money(v)}</span></div>
+      <div class="h-2 bg-slate-100 rounded-full"><div class="h-2 bg-teal-700 rounded-full" style="width:${Math.round(v/max*100)}%"></div></div>
+    </button>`;
+  }).join('') || '<p class="text-slate-400 text-sm">No data yet</p>';
+
+  const seed = logs.length ? logs : [{actor_email:'System', detail:'Workspace connected', created_at: new Date().toISOString(), action:'info'}];
+  document.getElementById('activity').innerHTML = seed.slice(0,8).map(a => `
+    <li><span class="font-medium">${a.actor_email||'Team'}</span> ${a.detail||a.action}<div class="text-xs text-slate-400">${a.created_at ? new Date(a.created_at).toLocaleString() : ''}</div></li>`).join('');
+}
+
+function renderGrid() {
+  const q = (document.getElementById('q').value||'').toLowerCase();
+  const b = document.getElementById('brand').value;
+  const stf = document.getElementById('stFilter').value;
+  const list = products.filter(p => {
+    const hay = `${p.sku} ${p.tbc_order || ''} ${p.brand} ${p.bag_name}`.toLowerCase();
+    const st = getS(p.sku).status;
+    return hay.includes(q) && (!b || brandKey(p.brand) === brandKey(b) || prettyBrand(p.brand) === b) && (!stf || st===stf || (stf==='coming' && st==='on-order'));
+  });
+  const sort = (document.getElementById('sortBy') || {}).value || 'newest';
+  const skuCmp = (a,c) => String(a.sku||'').localeCompare(String(c.sku||''), undefined, {numeric:true, sensitivity:'base'});
+  const dateOf = p => new Date(p.created_at || 0).getTime();
+  const marginOf = p => Number(p.tnc||0) - Number(p.landed||0);
+  const marginPct = p => {
+    const landed = Number(p.landed||0);
+    return landed ? ((Number(p.tnc||0) - landed) / landed) * 100 : -Infinity;
+  };
+  list.sort((a,c) => {
+    if (sort === 'newest') return dateOf(c) - dateOf(a) || skuCmp(a,c);
+    if (sort === 'oldest') return dateOf(a) - dateOf(c) || skuCmp(a,c);
+    if (sort === 'sku-desc') return skuCmp(c,a);
+    if (sort === 'brand') return String(a.brand||'').localeCompare(c.brand||'') || skuCmp(a,c);
+    if (sort === 'name') return String(a.bag_name||'').localeCompare(c.bag_name||'') || skuCmp(a,c);
+    if (sort === 'tnc') return Number(c.tnc||0) - Number(a.tnc||0);
+    if (sort === 'margin') return marginOf(c) - marginOf(a) || skuCmp(a,c);
+    if (sort === 'margin-pct') return marginPct(c) - marginPct(a) || skuCmp(a,c);
+    return skuCmp(a,c);
+  });
+  document.getElementById('grid').innerHTML = list.map(p => {
+    const t = getS(p.sku);
+    const fallback = p.image_url || '';
+    const margin = marginOf(p);
+    const landed = Number(p.landed||0);
+    const pct = landed ? Math.round((margin / landed) * 100) : null;
+    return `<button class="text-left bg-white rounded-2xl border overflow-hidden hover:shadow-md" onclick="openItem('${p.sku}')">
+      <div class="aspect-[4/3] bg-slate-100">
+        <img src="${imgSrc(p)}" class="w-full h-full object-cover" onerror="if(this.dataset.fb!=='1' && '${fallback}'){this.dataset.fb='1';this.src='${fallback}';} else {this.style.opacity='.2'}"/>
+      </div>
+      <div class="p-3">
+        <p class="text-xs font-mono font-semibold text-slate-800">SKU ${p.sku}</p>
+        ${p.tbc_order ? '<p class="text-[11px] font-mono text-slate-500">TBC order '+p.tbc_order+'</p>' : ''}
+        <p class="font-medium text-sm mt-1">${p.bag_name||''}</p>
+        <p class="text-xs text-slate-500">${prettyBrand(p.brand)}</p>
+        <div class="flex justify-between mt-2 text-sm"><span>${money(p.landed)}</span><span class="text-teal-700 font-semibold">${money(p.tnc)}</span></div>
+        <p class="text-[11px] mt-1 ${margin>=0?'text-emerald-700':'text-red-700'}">Margin ${money(margin)}${pct===null?'':' · '+pct+'%'}</p>
+        <div class="flex items-center justify-between mt-2">
+          <span class="inline-block text-[11px] px-2 py-0.5 rounded-full status-${statusClass(t.status)}">${statusLabel(t.status)}</span>
+          ${p.entrupy ? `<span class="text-[11px] text-teal-700">Entrupy</span>` : `<span class="text-[11px] text-slate-400">No Entrupy</span>`}
+        </div>
+      </div>
+    </button>`;
+  }).join('') || '<p class="text-slate-400">No bags match.</p>';
+}
+
+const tableSort = {
+  sold: { key: 'when', dir: 'desc' },
+  order: { key: 'when', dir: 'desc' }
+};
+
+function sortMark(table, key) {
+  const st = tableSort[table];
+  if (st.key !== key) return '';
+  return st.dir === 'asc' ? ' ↑' : ' ↓';
+}
+
+function paintTableHead(table) {
+  const el = document.getElementById(table + 'Head');
+  if (!el) return;
+  const cols = [
+    ['preview', 'Preview', 'p-3'],
+    ['sku', 'SKU', ''],
+    ['order', 'TBC order', ''],
+    ['bag', 'Bag', ''],
+    ['tnc', 'TNC', ''],
+    ['status', 'Status', ''],
+    ['by', 'By', ''],
+    ['when', 'When', '']
+  ];
+  el.innerHTML = cols.map(([key, label, cls]) =>
+    `<th class="${cls} cursor-pointer select-none hover:text-slate-800" onclick="sortStatusTable('${table}','${key}')">${label}${sortMark(table,key)}</th>`
+  ).join('');
+}
+
+window.sortStatusTable = function(table, key) {
+  const st = tableSort[table];
+  if (st.key === key) st.dir = st.dir === 'asc' ? 'desc' : 'asc';
+  else { st.key = key; st.dir = key === 'tnc' || key === 'when' ? 'desc' : 'asc'; }
+  if (table === 'sold') renderSold();
+  else renderOrder();
+};
+
+function statusVal(p, key) {
+  const t = getS(p.sku);
+  if (key === 'sku') return String(p.sku || '');
+  if (key === 'order') return String(p.tbc_order || '');
+  if (key === 'bag') return (prettyBrand(p.brand) + ' ' + (p.bag_name || '')).toLowerCase();
+  if (key === 'tnc') return Number(p.tnc || 0);
+  if (key === 'status') return t.status || '';
+  if (key === 'by') return (t.updated_by_email || '').toLowerCase();
+  if (key === 'when') return new Date(t.updated_at || 0).getTime();
+  return String(p.sku || '');
+}
+
+function statusRows(statuses, table) {
+  const st = tableSort[table] || { key: 'sku', dir: 'asc' };
+  const rows = products.filter(p => statuses.includes(getS(p.sku).status));
+  rows.sort((a,c) => {
+    const av = statusVal(a, st.key);
+    const cv = statusVal(c, st.key);
+    let cmp = 0;
+    if (typeof av === 'number' && typeof cv === 'number') cmp = av - cv;
+    else cmp = String(av).localeCompare(String(cv), undefined, { numeric: true, sensitivity: 'base' });
+    return st.dir === 'desc' ? -cmp : cmp;
+  });
+  return rows.map(p => {
+      const t = getS(p.sku);
+      const src = `images/${p.sku}.jpg`;
+      const fb = (p.image_url || '').replace(/"/g,'');
+      return `<tr class="border-t hover:bg-slate-50 cursor-pointer" onclick="openItem('${p.sku}')">
+        <td class="p-2 w-24"><img src="${src}" class="h-16 w-16 object-contain bg-slate-50 rounded" onerror="if(this.dataset.fb!=='1'&&'${fb}'){this.dataset.fb='1';this.src='${fb}'}"/></td>
+        <td class="p-3 font-mono text-xs">${p.sku}</td>
+        <td class="p-3 font-mono text-xs">${p.tbc_order || '—'}</td>
+        <td><p class="font-medium">${p.bag_name||''}</p><p class="text-xs text-slate-500">${prettyBrand(p.brand)}</p></td>
+        <td class="text-teal-700 font-semibold">${money(p.tnc)}</td>
+        <td><span class="status-${statusClass(t.status)} px-2 py-0.5 rounded-full text-xs">${statusLabel(t.status)}</span></td>
+        <td>${t.updated_by_email||'—'}</td>
+        <td class="text-slate-500">${t.updated_at ? new Date(t.updated_at).toLocaleString() : '—'}</td>
+      </tr>`;
+    }).join('');
+}
+function renderSold() {
+  paintTableHead('sold');
+  const html = statusRows(['sold','reserved'], 'sold');
+  document.getElementById('soldEmpty').style.display = html ? 'none' : 'block';
+  document.getElementById('soldRows').innerHTML = html;
+}
+function renderOrder() {
+  paintTableHead('order');
+  const html = statusRows(['on-order','coming'], 'order');
+  document.getElementById('orderEmpty').style.display = html ? 'none' : 'block';
+  document.getElementById('orderRows').innerHTML = html;
+}
+
+async function renderTeam() {
+  const { data: people } = await sb.from('profiles').select('*').order('created_at');
+  document.getElementById('teamList').innerHTML = (people||[]).map(p => `
+    <div class="p-4 flex justify-between"><div><p class="font-medium">${p.display_name||p.email}</p><p class="text-xs text-slate-500">${p.email}</p></div><span class="text-xs uppercase tracking-wide text-teal-700">${p.role}</span></div>`).join('') || '<div class="p-4 text-slate-400">No profiles yet</div>';
+  document.getElementById('activityFull').innerHTML = (logs||[]).map(a => `
+    <li>${a.created_at ? new Date(a.created_at).toLocaleString() : ''} — <b>${a.actor_email||''}</b> ${a.detail||a.action}</li>`).join('') || '<li class="text-slate-400">No activity yet</li>';
+}
+
+window.openItem = function(sku) {
+  skipAuto = true;
+  current = products.find(p => p.sku===sku);
+  if (!current) return;
+  const t = getS(sku);
+  document.getElementById('mt').textContent = current.bag_name || sku;
+  document.getElementById('ms').textContent = sku;
+  document.getElementById('morder').textContent = current.tbc_order || '—';
+  document.getElementById('mlanded').value = current.landed ?? '';
+  document.getElementById('mtnc').value = current.tnc ?? '';
+  const m = (Number(current.tnc||0) - Number(current.landed||0));
+  document.getElementById('mm').textContent = 'Margin ' + money(m);
+  document.getElementById('mbrand').value = current.brand || '';
+  document.getElementById('mname').value = current.bag_name || '';
+  document.getElementById('mentrupy').value = current.entrupy || '';
+  document.getElementById('mmeas').value = current.measurements || '';
+  document.getElementById('mdesc').value = current.description || '';
+  const en = document.getElementById('me');
+  if (current.entrupy) { en.href = current.entrupy; en.textContent = 'Open Entrupy certificate'; en.classList.remove('hidden'); }
+  else { en.href = '#'; en.textContent = 'No Entrupy on file — paste the link above and Save'; }
+  const img = document.getElementById('mi');
+  const shots = photosOf(current);
+  img.onerror = () => { if (current.image_url) img.src = current.image_url; };
+  img.src = shots[0] || ('images/' + sku + '.jpg');
+  paintThumbs(current);
+  document.getElementById('mMore').value = '';
+  document.getElementById('mst').value = (t.status === 'on-order' ? 'coming' : t.status) || 'in-stock';
+  document.getElementById('mqty').value = t.qty ?? 1;
+  document.getElementById('mnotes').value = t.notes || '';
+  document.getElementById('mqr').value = 'https://shop.thenextcarry.com/shop.html?sku=' + encodeURIComponent(sku);
+  document.getElementById('msaveMsg').textContent = 'Changes save by themselves.';
+  const modal = document.getElementById('modal');
+  modal.classList.remove('hidden'); modal.classList.add('flex');
+  skipAuto = false;
+};
+
+function closeBagModal() {
+  const modal = document.getElementById('modal');
+  modal.classList.add('hidden'); modal.classList.remove('flex');
+}
+document.getElementById('mc').onclick = closeBagModal;
+document.getElementById('modal').onclick = (e) => { if (e.target.id === 'modal') closeBagModal(); };
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !document.getElementById('modal').classList.contains('hidden')) closeBagModal();
+});
+
+let savingBag = false;
+let closeAfterSave = false;
+async function saveBag() {
+  if (savingBag) return;
+  savingBag = true;
+  const btn = document.getElementById('msave');
+  const shouldClose = closeAfterSave;
+  closeAfterSave = false;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  let ok = false;
+  try {
+  const status = document.getElementById('mst').value;
+  const qty = Number(document.getElementById('mqty').value || 1);
+  const notes = document.getElementById('mnotes').value;
+  const landed = Number(document.getElementById('mlanded').value || 0) || null;
+  const tnc = Number(document.getElementById('mtnc').value || 0) || null;
+  const brand = document.getElementById('mbrand').value.trim();
+  const bag_name = document.getElementById('mname').value.trim();
+  const entrupy = document.getElementById('mentrupy').value.trim() || null;
+  const measurements = document.getElementById('mmeas').value.trim() || null;
+  const description = document.getElementById('mdesc').value.trim() || null;
+  const payload = { sku: current.sku, status, qty, notes, updated_by: user.id, updated_by_email: user.email, updated_at: new Date().toISOString() };
+  const { error } = await sb.from('inventory_state').upsert(payload);
+  if (error) { document.getElementById('msaveMsg').textContent = error.message; return; }
+  let gallery = Array.isArray(current.gallery) ? [...current.gallery] : [];
+  const extraInput = document.getElementById('mMore');
+  const extra = extraInput.files && extraInput.files.length ? [...extraInput.files] : [];
+  extraInput.value = '';
+    if (extra.length) {
+      document.getElementById('msaveMsg').textContent = 'Uploading photos…';
+      const urls = await uploadBagPhotos(current.sku, extra);
+      gallery = [...new Set([...gallery, ...urls])];
+      if (!current.image_url && urls[0]) current.image_url = urls[0];
+    }
+    const prod = await sb.from('products').update({ brand, bag_name, landed, tnc, entrupy, measurements, description, image_url: current.image_url, gallery }).eq('sku', current.sku);
+    if (prod.error) { document.getElementById('msaveMsg').textContent = prod.error.message + ' — run gallery-photos.sql in Supabase'; return; }
+    document.getElementById('mt').textContent = bag_name || current.sku;
+    await sb.from('activity_log').insert({ sku: current.sku, action: 'update', detail: `updated ${current.sku}; TNC ${tnc}`, actor_email: user.email });
+    document.getElementById('msaveMsg').textContent = extra.length ? ('Saved. ' + extra.length + ' new photo(s) added.') : 'Saved.';
+    await loadAll();
+    current = products.find(p => p.sku === current.sku) || current;
+    current.gallery = gallery;
+    const shots = photosOf(current);
+    document.getElementById('mi').src = shots[0] || document.getElementById('mi').src;
+    paintThumbs(current);
+    ok = true;
+  } finally {
+    savingBag = false;
+    btn.disabled = false;
+    btn.textContent = 'Save and Close';
+  }
+  if (ok && shouldClose) closeBagModal();
+}
+document.getElementById('msave').onclick = () => {
+  closeAfterSave = true;
+  saveBag();
+};
+
+let skipAuto = false;
+let autoTimer = null;
+function queueAutosave(fast) {
+  if (skipAuto || !current) return;
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(() => saveBag(), fast ? 150 : 700);
+}
+['mbrand','mname','mlanded','mtnc','mentrupy','mmeas','mdesc','mqty','mnotes'].forEach(id => {
+  const el = document.getElementById(id);
+  el.addEventListener('input', () => queueAutosave(false));
+  el.addEventListener('change', () => queueAutosave(true));
+});
+document.getElementById('mst').addEventListener('change', () => queueAutosave(true));
+document.getElementById('mMore').addEventListener('change', () => queueAutosave(true));
+document.getElementById('mlanded').addEventListener('input', () => {
+  const m = Number(document.getElementById('mtnc').value||0) - Number(document.getElementById('mlanded').value||0);
+  document.getElementById('mm').textContent = 'Margin ' + money(m);
+});
+document.getElementById('mtnc').addEventListener('input', () => {
+  const m = Number(document.getElementById('mtnc').value||0) - Number(document.getElementById('mlanded').value||0);
+  document.getElementById('mm').textContent = 'Margin ' + money(m);
+});
+
+document.getElementById('cfgSave').onclick = () => {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key = document.getElementById('cfgKey').value.trim();
+  const err = document.getElementById('cfgErr');
+  if (!url.startsWith('http') || key.length < 20) {
+    err.textContent = 'Paste both the Project URL and the anon key.';
+    err.classList.remove('hidden');
+    return;
+  }
+  localStorage.setItem(CFG_KEY, JSON.stringify({url, key}));
+  start();
+};
+
+document.getElementById('btnLogin').onclick = async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPass').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const box = document.getElementById('authErr');
+  if (error) { box.textContent = error.message; box.classList.remove('hidden'); return; }
+  start();
+};
+
+document.getElementById('btnSignup').onclick = async () => {
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPass').value;
+  const { error } = await sb.auth.signUp({ email, password });
+  const box = document.getElementById('authErr');
+  if (error) { box.textContent = error.message; box.classList.remove('hidden'); return; }
+  box.classList.remove('hidden');
+  box.classList.remove('text-red-600');
+  box.classList.add('text-teal-700');
+  box.textContent = 'Account created. If email confirmation is on, check your inbox, then sign in.';
+  start();
+};
+
+document.getElementById('btnOut').onclick = async () => { await sb.auth.signOut(); show('screen-auth'); };
+document.getElementById('btnResetCfg').onclick = () => { localStorage.removeItem(CFG_KEY); show('screen-setup'); };
+document.getElementById('addSave').onclick = async () => {
+  const sku = document.getElementById('addSku').value.trim();
+  const brand = document.getElementById('addBrand').value.trim();
+  const bag_name = document.getElementById('addName').value.trim();
+  const msg = document.getElementById('addMsg');
+  if (!sku || !brand || !bag_name) { msg.textContent = 'SKU, brand, and name are required.'; return; }
+  msg.textContent = 'Saving…';
+  let image_url = null;
+  let gallery = [];
+  const files = [...(document.getElementById('addPhoto').files || [])];
+  if (files.length) {
+    const urls = await uploadBagPhotos(sku, files);
+    image_url = urls[0] || null;
+    gallery = urls.slice(1);
+  }
+  const row = {
+    sku, brand, bag_name,
+    vendor: document.getElementById('addVendor').value.trim() || null,
+    landed: Number(document.getElementById('addLanded').value || 0) || null,
+    tnc: Number(document.getElementById('addTnc').value || 0) || null,
+    entrupy: document.getElementById('addEntrupy').value.trim() || null,
+    image_url,
+    gallery
+  };
+  const ins = await sb.from('products').upsert(row);
+  if (ins.error) { msg.textContent = ins.error.message; return; }
+  const status = document.getElementById('addStatus').value;
+  await sb.from('inventory_state').upsert({ sku, status, qty: 1, updated_by: user.id, updated_by_email: user.email, updated_at: new Date().toISOString() });
+  await sb.from('activity_log').insert({ sku, action: 'add', detail: 'added ' + sku + ' (' + status + ')', actor_email: user.email });
+  msg.textContent = 'Saved. The team will see this bag.';
+  ['addSku','addBrand','addName','addVendor','addLanded','addTnc','addEntrupy'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('addPhoto').value = '';
+  await loadAll();
+};
+
+function parseBulkLine(line, header) {
+  const parts = line.split(',').map(s => s.trim());
+  const get = (name, i) => {
+    if (header && header.indexOf(name) >= 0) return parts[header.indexOf(name)] || '';
+    return parts[i] || '';
+  };
+  return {
+    sku: get('sku', 0),
+    brand: get('brand', 1),
+    bag_name: get('bag_name', 2) || get('name', 2),
+    vendor: get('vendor', 3) || null,
+    landed: get('landed', 4) || '',
+    tnc: get('tnc', 5) || '',
+    entrupy: get('entrupy', 6) || '',
+    status: (get('status', 7) || 'in-stock').toLowerCase()
+  };
+}
+
+function addBulkRow(pre) {
+  const d = pre || {};
+  const wrap = document.createElement('div');
+  wrap.className = 'grid md:grid-cols-8 gap-2 border rounded-xl p-3 bg-slate-50 bulk-row';
+  wrap.innerHTML = `
+    <input class="border rounded-lg px-2 py-2 text-sm b-sku" placeholder="SKU *" value="${d.sku||''}" />
+    <input class="border rounded-lg px-2 py-2 text-sm b-brand" placeholder="Brand *" value="${d.brand||''}" />
+    <input class="border rounded-lg px-2 py-2 text-sm md:col-span-2 b-name" placeholder="Bag name *" value="${d.bag_name||''}" />
+    <input class="border rounded-lg px-2 py-2 text-sm b-landed" placeholder="Landed" type="number" value="${d.landed||''}" />
+    <input class="border rounded-lg px-2 py-2 text-sm b-tnc" placeholder="TNC" type="number" value="${d.tnc||''}" />
+    <input class="border rounded-lg px-2 py-2 text-sm b-ent" placeholder="Entrupy link" value="${d.entrupy||''}" />
+    <div class="flex gap-2">
+      <select class="border rounded-lg px-2 py-2 text-sm flex-1 b-st">
+        <option value="in-stock">In stock</option>
+        <option value="coming">Coming soon</option>
+        <option value="reserved">Pending</option>
+      </select>
+      <button type="button" class="text-slate-400 b-del">&times;</button>
+    </div>`;
+  if (d.status) wrap.querySelector('.b-st').value = d.status;
+  wrap.querySelector('.b-del').onclick = () => wrap.remove();
+  document.getElementById('bulkRows').appendChild(wrap);
+}
+
+document.getElementById('bulkAddRow').onclick = () => addBulkRow();
+addBulkRow();
+addBulkRow();
+addBulkRow();
+
+document.getElementById('bulkCsv').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const raw = String(reader.result).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    if (!raw.length) return;
+    let header = null, lines = raw;
+    if (/sku/i.test(raw[0])) {
+      header = raw[0].split(',').map(s => s.trim().toLowerCase().replace(/\s+/g, '_'));
+      lines = raw.slice(1);
+    }
+    document.getElementById('bulkRows').innerHTML = '';
+    lines.forEach(line => addBulkRow(parseBulkLine(line, header)));
+    document.getElementById('bulkMsg').textContent = 'Loaded ' + lines.length + ' rows from the spreadsheet. Add photos named as each SKU, then Save all bags.';
+  };
+  reader.readAsText(file);
+};
+
+document.getElementById('bulkSave').onclick = async () => {
+  const msg = document.getElementById('bulkMsg');
+  const rows = [...document.querySelectorAll('.bulk-row')].map(el => ({
+    sku: el.querySelector('.b-sku').value.trim(),
+    brand: el.querySelector('.b-brand').value.trim(),
+    bag_name: el.querySelector('.b-name').value.trim(),
+    vendor: null,
+    landed: Number(el.querySelector('.b-landed').value || 0) || null,
+    tnc: Number(el.querySelector('.b-tnc').value || 0) || null,
+    entrupy: el.querySelector('.b-ent').value.trim() || null,
+    status: el.querySelector('.b-st').value
+  })).filter(r => r.sku || r.brand || r.bag_name);
+  if (!rows.length) { msg.textContent = 'Fill at least one bag.'; return; }
+  const files = [...(document.getElementById('bulkPhotos').files || [])];
+  const fileFor = sku => files.find(f => {
+    const base = f.name.replace(/\.[^.]+$/, '').toLowerCase();
+    return base === sku.toLowerCase() || base.startsWith(sku.toLowerCase());
+  });
+  msg.textContent = 'Saving ' + rows.length + ' bags…';
+  let ok = 0, fail = 0;
+  for (const row of rows) {
+    if (!row.sku || !row.brand || !row.bag_name) { fail++; continue; }
+    let image_url = null;
+    const file = fileFor(row.sku);
+    if (file) {
+      const ext = file.name.includes('.') ? file.name.slice(file.name.lastIndexOf('.')) : '.jpg';
+      const path = row.sku + ext;
+      const up = await sb.storage.from('bags').upload(path, file, { upsert: true, contentType: file.type });
+      if (!up.error) image_url = sb.storage.from('bags').getPublicUrl(path).data.publicUrl;
+    }
+    const ins = await sb.from('products').upsert({
+      sku: row.sku, brand: row.brand, bag_name: row.bag_name, vendor: row.vendor,
+      landed: row.landed, tnc: row.tnc, entrupy: row.entrupy, image_url
+    });
+    if (ins.error) { fail++; continue; }
+    await sb.from('inventory_state').upsert({ sku: row.sku, status: row.status, qty: 1, updated_by: user.id, updated_by_email: user.email, updated_at: new Date().toISOString() });
+    await sb.from('activity_log').insert({ sku: row.sku, action: 'add', detail: 'bulk added ' + row.sku, actor_email: user.email });
+    ok++;
+    msg.textContent = 'Saved ' + ok + ' of ' + rows.length + '…';
+  }
+  msg.textContent = 'Done. Saved ' + ok + (fail ? (', skipped ' + fail) : '') + '.';
+  await loadAll();
+};
+
+document.getElementById('btnExport').onclick = () => {
+  const esc = v => {
+    const s = v == null ? '' : String(v);
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const header = ['sku','tbc_order','brand','bag_name','vendor','landed','tnc','entrupy','status','qty','notes','image_url'];
+  const rows = products.map(p => {
+    const t = getS(p.sku);
+    return [p.sku, p.tbc_order, p.brand, p.bag_name, p.vendor, p.landed, p.tnc, p.entrupy, t.status, t.qty, t.notes, p.image_url].map(esc).join(',');
+  });
+  const csv = [header.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tnc-inventory.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+document.getElementById('folderGo').onclick = async () => {
+  const input = document.getElementById('folderPhotos');
+  const msg = document.getElementById('folderMsg');
+  const files = [...(input.files || [])].filter(f => /\.(jpe?g|png|webp)$/i.test(f.name));
+  if (!files.length) { msg.textContent = 'Choose the folder that contains the SKU folders first.'; return; }
+  const groups = {};
+  for (const f of files) {
+    const parts = (f.webkitRelativePath || f.name).split(/[/\\]/).filter(Boolean);
+    let sku = null;
+    if (parts.length >= 2) sku = parts[parts.length - 2];
+    if (!sku || sku.toLowerCase().includes('product') || sku.toLowerCase().includes('next-carry') || sku.toLowerCase().includes('3815')) {
+      if (parts.length >= 3) sku = parts[parts.length - 2];
+    }
+    if (!sku) continue;
+    (groups[sku] = groups[sku] || []).push(f);
+  }
+  const skus = Object.keys(groups);
+  if (!skus.length) { msg.textContent = 'No SKU folders found. Select the parent folder (The-Next-Carry), not a single picture.'; return; }
+  msg.textContent = 'Uploading photos for ' + skus.length + ' bags. Leave this page open…';
+  let ok = 0, fail = 0;
+  for (const sku of skus) {
+    const list = groups[sku].sort((a,b) => a.name.localeCompare(b.name, undefined, {numeric:true}));
+    try {
+      const urls = await uploadBagPhotos(sku, list);
+      if (!urls.length) { fail++; continue; }
+      const row = products.find(p => p.sku === sku) || { sku, brand: 'TBC', bag_name: sku };
+      const gallery = urls.slice(1);
+      const ins = await sb.from('products').upsert({
+        sku,
+        brand: row.brand || 'TBC',
+        bag_name: row.bag_name || sku,
+        image_url: urls[0],
+        gallery
+      });
+      if (ins.error) { fail++; msg.textContent += '\n' + sku + ': ' + ins.error.message; }
+      else { ok++; msg.textContent = 'Uploaded ' + ok + ' of ' + skus.length + ' bags…'; }
+    } catch (e) { fail++; }
+  }
+  await loadAll();
+  msg.textContent = 'Done. ' + ok + ' bags have photos.' + (fail ? ' ' + fail + ' failed.' : '') + ' Open Inventory to check.';
+};
+
+
+window.openBrand = function(el) {
+  const name = el.getAttribute('data-brand') || '';
+  const sel = document.getElementById('brand');
+  if (sel) {
+    const opts = [...sel.options].map(o => o.value);
+    sel.value = opts.includes(name) ? name : '';
+    if (!sel.value && name) {
+      const match = opts.find(o => o.toLowerCase() === name.toLowerCase());
+      if (match) sel.value = match;
+    }
+  }
+  document.getElementById('q').value = '';
+  document.getElementById('stFilter').value = '';
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === 'inv'));
+  ['dash','inv','sold','order','add','team'].forEach(id => document.getElementById('view-'+id).classList.toggle('hidden', id!=='inv'));
+  document.getElementById('pageTitle').textContent = name ? name : 'Inventory';
+  renderGrid();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+window.openStat = function(view, filter) {
+  if (view === 'dash') return;
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  ['dash','inv','sold','order','add','team'].forEach(id => document.getElementById('view-'+id).classList.toggle('hidden', id!==view));
+  document.getElementById('pageTitle').textContent = {inv:'Inventory', sold:'Sold / reserved', order:'Coming soon'}[view] || 'Dashboard';
+  if (view === 'inv') {
+    document.getElementById('q').value = '';
+    document.getElementById('brand').value = '';
+    document.getElementById('stFilter').value = filter || '';
+    renderGrid();
+  }
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+document.getElementById('btnRefresh').onclick = loadAll;
+document.getElementById('q').oninput = renderGrid;
+document.getElementById('brand').onchange = renderGrid;
+document.getElementById('stFilter').onchange = renderGrid;
+document.getElementById('sortBy').onchange = renderGrid;
+document.querySelectorAll('.nav-item').forEach(btn => btn.onclick = () => {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const v = btn.dataset.view;
+  ['dash','inv','sold','order','add','team'].forEach(id => document.getElementById('view-'+id).classList.toggle('hidden', id!==v));
+  document.getElementById('pageTitle').textContent = {dash:'Dashboard', inv:'Inventory', sold:'Sold / reserved', order:'Coming soon', add:'Add bag', team:'Team & activity'}[v];
+});
+
+start();
+</script>
+</body>
+</html>

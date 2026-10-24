@@ -1,0 +1,3 @@
+# Only the public shop. Do not redirect inventory.thenextcarry.com.
+https://shop.thenextcarry.com/ /shop 302
+https://shop.thenextcarry.com/shop.html /shop 302
